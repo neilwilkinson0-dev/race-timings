@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Race Spectator Timings</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f6f1;
+    --surface: #fff;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.2);
+    --text: #1a1a18;
+    --muted: #6b6a65;
+    --accent: #2c5f2e;
+    --accent-light: #e8f0e8;
+    --accent2: #8b3a1e;
+    --accent2-light: #f5ece8;
+    --radius: 10px;
+    --mono: 'DM Mono', monospace;
+    --serif: 'Fraunces', serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #242420;
+      --border: rgba(255,255,255,0.1);
+      --border-strong: rgba(255,255,255,0.2);
+      --text: #f0ede6;
+      --muted: #9a9890;
+      --accent: #5a9b5c;
+      --accent-light: #1e2e1e;
+      --accent2: #c97a5a;
+      --accent2-light: #2e1e18;
+    }
+  }
+  body { font-family: var(--mono); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; }
+  .app { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  header { margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+  header h1 { font-family: var(--serif); font-weight: 600; font-size: 2rem; letter-spacing: -0.02em; color: var(--text); }
+  header p { color: var(--muted); font-size: 13px; margin-top: 0.25rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+  .card-title { font-family: var(--serif); font-weight: 600; font-size: 1rem; margin-bottom: 1rem; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  input, select { width: 100%; background: var(--bg); border: 0.5px solid var(--border-strong); border-radius: 6px; padding: 8px 10px; font-family: var(--mono); font-size: 13px; color: var(--text); outline: none; }
+  input:focus, select:focus { border-color: var(--accent); }
+  .field { margin-bottom: 0.75rem; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 0.5px solid var(--border-strong); border-radius: 6px; padding: 7px 14px; font-family: var(--mono); font-size: 12px; color: var(--text); cursor: pointer; transition: background 0.15s; }
+  .btn:hover { background: var(--border); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { opacity: 0.9; background: var(--accent); }
+  .btn-danger { color: var(--accent2); border-color: transparent; font-size: 11px; }
+  .btn-danger:hover { background: var(--accent2-light); }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .runner-block { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 0.75rem; position: relative; }
+  .runner-label { display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem; }
+  .runner-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .runner-name-input { flex: 1; font-family: var(--mono); font-size: 13px; background: transparent; border: none; border-bottom: 0.5px solid var(--border-strong); border-radius: 0; padding: 2px 4px; width: 100%; color: var(--text); outline: none; }
+  .location-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 0.5rem; }
+  .location-row input { flex: 1; }
+  .results-section { margin-top: 2rem; }
+  .results-title { font-family: var(--serif); font-weight: 600; font-size: 1.25rem; margin-bottom: 1rem; }
+  .location-result-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+  .location-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 0.75rem; border-bottom: 0.5px solid var(--border); padding-bottom: 0.75rem; flex-wrap: wrap; }
+  .location-km { font-family: var(--serif); font-size: 1.1rem; font-weight: 600; }
+  .location-mi { font-size: 12px; color: var(--muted); }
+  .runner-timing-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 0.5px solid var(--border); flex-wrap: wrap; }
+  .runner-timing-row:last-child { border-bottom: none; }
+  .runner-name { font-size: 13px; min-width: 120px; display: flex; align-items: center; gap: 6px; }
+  .time-range { display: flex; align-items: center; gap: 6px; flex: 1; flex-wrap: wrap; }
+  .time-badge { font-family: var(--mono); font-size: 12px; background: var(--accent-light); color: var(--accent); border-radius: 4px; padding: 3px 8px; white-space: nowrap; }
+  .time-badge.late { background: var(--accent2-light); color: var(--accent2); }
+  .time-separator { font-size: 11px; color: var(--muted); }
+  .settings-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .settings-row .field { flex: 1; min-width: 140px; }
+  .empty-state { text-align: center; padding: 2rem; color: var(--muted); font-size: 13px; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 4px; background: var(--accent-light); color: var(--accent); }
+  .calc-btn-wrap { margin-top: 1.5rem; text-align: center; }
+  .inline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 500px) { .inline-grid { grid-template-columns: 1fr; } .runner-timing-row { gap: 6px; } }
+  .pace-hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .legend { font-size: 11px; color: var(--muted); margin-top: 10px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 3px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1>Race Spectator Timings</h1>
+    <p>Plan where and when to cheer — for every runner, at every spot.</p>
+  </header>
+
+  <!-- Race Settings -->
+  <div class="card" style="margin-bottom:1rem;">
+    <div class="card-title">Race settings</div>
+    <div class="settings-row">
+      <div class="field">
+        <label>Race distance</label>
+        <select id="raceDistance">
+          <option value="42.195">Marathon (42.195 km)</option>
+          <option value="21.0975">Half Marathon (21.1 km)</option>
+          <option value="10">10 km</option>
+          <option value="5">5 km</option>
+          <option value="custom">Custom distance</option>
+        </select>
+      </div>
+      <div class="field" id="customDistanceField" style="display:none;">
+        <label>Custom distance (in selected unit)</label>
+        <input type="number" id="customDistance" placeholder="e.g. 50" min="0.1" step="0.1">
+      </div>
+      <div class="field">
+        <label>Distance unit</label>
+        <select id="distanceUnit">
+          <option value="km">Kilometres (km)</option>
+          <option value="mi">Miles (mi)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Race start time</label>
+        <input type="time" id="raceStart" value="09:00">
+      </div>
+    </div>
+  </div>
+
+  <!-- Runners -->
+  <div style="margin-bottom:1.5rem;">
+    <div class="section-header">
+      <span style="font-family:var(--serif);font-weight:600;font-size:1rem;">Runners</span>
+      <button class="btn" onclick="addRunner()">+ add runner</button>
+    </div>
+    <div id="runnersList"></div>
+  </div>
+
+  <!-- Spectator Spots -->
+  <div style="margin-bottom:1.5rem;">
+    <div class="section-header">
+      <span style="font-family:var(--serif);font-weight:600;font-size:1rem;">Spectator spots</span>
+      <button class="btn" onclick="addLocation()">+ add location</button>
+    </div>
+    <div id="locationsList"></div>
+  </div>
+
+  <div class="calc-btn-wrap">
+    <button class="btn btn-primary" onclick="calculate()" style="font-size:14px;padding:10px 28px;">Calculate timings &rarr;</button>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection" style="display:none;">
+    <div class="results-title">Timings by location</div>
+    <div id="resultsContainer"></div>
+  </div>
+
+</div>
+
+<script>
+  const RUNNER_COLORS = ['#2c5f2e','#8b3a1e','#1a4a7a','#6b4c1e','#5a2c6b','#1e6b5a','#7a1a4a','#2e4a1e'];
+
+  let runners = [];
+  let locations = [];
+  let runnerCount = 0;
+  let locationCount = 0;
+
+  // ── Local storage helpers ──────────────────────────────────────────────────
+  function getCookie(key) {
+    try { const v = localStorage.getItem('rst_' + key); return v ? JSON.parse(v) : null; } catch { return null; }
+  }
+  function setCookie(key, val) {
+    try { localStorage.setItem('rst_' + key, JSON.stringify(val)); } catch {}
+  }
+  function saveState() {
+    setCookie('runners', runners.map(r => ({ id: r.id, name: r.name, finishHours: r.finishHours, finishMins: r.finishMins, color: r.color })));
+    setCookie('locations', locations.map(l => ({ id: l.id, dist: l.dist })));
+    setCookie('raceDistance', document.getElementById('raceDistance').value);
+    setCookie('customDistance', document.getElementById('customDistance').value);
+    setCookie('distanceUnit', document.getElementById('distanceUnit').value);
+    setCookie('raceStart', document.getElementById('raceStart').value);
+  }
+
+  // ── Unit conversions ───────────────────────────────────────────────────────
+  function kmToMi(km) { return km * 0.621371; }
+  function miToKm(mi) { return mi * 1.60934; }
+
+  // ── Race distance ──────────────────────────────────────────────────────────
+  function getRaceDistanceKm() {
+    const unit = document.getElementById('distanceUnit').value;
+    const sel  = document.getElementById('raceDistance').value;
+    let dist = sel === 'custom'
+      ? (parseFloat(document.getElementById('customDistance').value) || 0)
+      : parseFloat(sel);
+    return unit === 'mi' ? miToKm(dist) : dist;
+  }
+
+  // ── Runners ────────────────────────────────────────────────────────────────
+  function addRunner(data) {
+    runnerCount++;
+    const id    = 'r' + Date.now() + runnerCount;
+    const color = RUNNER_COLORS[runners.length % RUNNER_COLORS.length];
+    runners.push({
+      id,
+      name:        data ? data.name        : 'Runner ' + runnerCount,
+      finishHours: data ? data.finishHours : 4,
+      finishMins:  data ? data.finishMins  : 0,
+      color:       data ? data.color       : color
+    });
+    renderRunners();
+    saveState();
+  }
+
+  function removeRunner(id) {
+    runners = runners.filter(r => r.id !== id);
+    renderRunners();
+    saveState();
+  }
+
+  function updateRunner(id, field, val) {
+    const r = runners.find(r => r.id === id);
+    if (r) { r[field] = val; saveState(); renderRunners(); }
+  }
+
+  function getPaceStr(r) {
+    const dist = getRaceDistanceKm();
+    if (!dist) return '—';
+    const totalMins  = r.finishHours * 60 + r.finishMins;
+    const pacePerKm  = totalMins / dist;
+    const m = Math.floor(pacePerKm);
+    const s = Math.round((pacePerKm - m) * 60);
+    return m + ':' + s.toString().padStart(2, '0') + ' /km';
+  }
+
+  function renderRunners() {
+    const container = document.getElementById('runnersList');
+    if (!runners.length) {
+      container.innerHTML = '<div class="empty-state">No runners added yet.</div>';
+      return;
+    }
+    container.innerHTML = runners.map(r => `
+      <div class="runner-block">
+        <div class="runner-label">
+          <span class="runner-dot" style="background:${r.color}"></span>
+          <input class="runner-name-input" value="${escHtml(r.name)}"
+            oninput="updateRunner('${r.id}','name',this.value)"
+            placeholder="Runner name">
+          <button class="btn btn-danger" onclick="removeRunner('${r.id}')">remove</button>
+        </div>
+        <div class="inline-grid">
+          <div class="field">
+            <label>Expected finish &mdash; hours</label>
+            <input type="number" min="0" max="24" step="1" value="${r.finishHours}"
+              oninput="updateRunner('${r.id}','finishHours',+this.value)">
+          </div>
+          <div class="field">
+            <label>Expected finish &mdash; minutes</label>
+            <input type="number" min="0" max="59" step="1" value="${r.finishMins}"
+              oninput="updateRunner('${r.id}','finishMins',+this.value)">
+          </div>
+        </div>
+        <div class="pace-hint">Target: ${r.finishHours}h ${r.finishMins}m &nbsp;&middot;&nbsp; ~${getPaceStr(r)}</div>
+      </div>
+    `).join('');
+  }
+
+  // ── Locations ──────────────────────────────────────────────────────────────
+  function addLocation(data) {
+    locationCount++;
+    const id = 'l' + Date.now() + locationCount;
+    locations.push({ id, dist: data ? data.dist : '' });
+    renderLocations();
+    saveState();
+  }
+
+  function removeLocation(id) {
+    locations = locations.filter(l => l.id !== id);
+    renderLocations();
+    saveState();
+  }
+
+  function updateLocation(id, field, val) {
+    const l = locations.find(l => l.id === id);
+    if (l) { l[field] = val; saveState(); }
+  }
+
+  function renderLocations() {
+    const unit      = document.getElementById('distanceUnit').value;
+    const container = document.getElementById('locationsList');
+    if (!locations.length) {
+      container.innerHTML = '<div class="empty-state">No spectator spots added yet.</div>';
+      return;
+    }
+    container.innerHTML = locations.map((l, i) => `
+      <div class="location-row">
+        <div style="font-size:12px;color:var(--muted);min-width:60px;">Spot ${i + 1}</div>
+        <input type="number" min="0" step="0.1"
+          value="${l.dist !== '' ? l.dist : ''}"
+          placeholder="distance in ${unit}"
+          oninput="updateLocation('${l.id}','dist',+this.value)"
+          style="flex:1;">
+        <span style="font-size:12px;color:var(--muted);min-width:24px;">${unit}</span>
+        <button class="btn btn-danger" onclick="removeLocation('${l.id}')">&times;</button>
+      </div>
+    `).join('');
+  }
+
+  // ── Time arithmetic ────────────────────────────────────────────────────────
+  function addMinutesToTime(startTime, minutes) {
+    const [h, m] = startTime.split(':').map(Number);
+    const total  = h * 60 + m + minutes;
+    const nh     = Math.floor(total / 60) % 24;
+    const nm     = Math.round(total % 60);
+    return nh.toString().padStart(2, '0') + ':' + nm.toString().padStart(2, '0');
+  }
+
+  // ── Calculate ──────────────────────────────────────────────────────────────
+  function calculate() {
+    if (!runners.length)   { alert('Add at least one runner.'); return; }
+    if (!locations.length) { alert('Add at least one spectator spot.'); return; }
+
+    const unit      = document.getElementById('distanceUnit').value;
+    const startTime = document.getElementById('raceStart').value;
+    const raceKm    = getRaceDistanceKm();
+    if (!raceKm) { alert('Set a valid race distance.'); return; }
+
+    const validLocs = locations
+      .filter(l => l.dist !== '' && !isNaN(l.dist) && l.dist > 0)
+      .sort((a, b) => a.dist - b.dist);
+
+    if (!validLocs.length) { alert('Add at least one location with a valid distance.'); return; }
+
+    const html = validLocs.map(loc => {
+      const locKm    = unit === 'mi' ? miToKm(loc.dist) : loc.dist;
+      const fraction = locKm / raceKm;
+      const altLabel = unit === 'mi'
+        ? '(' + locKm.toFixed(1) + ' km)'
+        : '(' + kmToMi(locKm).toFixed(1) + ' mi)';
+
+      const runnerRows = runners.map(r => {
+        const totalMins  = r.finishHours * 60 + r.finishMins;
+        const baseMins   = totalMins * fraction;
+        const fastMins   = baseMins * 0.95;
+        const slowMins   = baseMins * 1.15;
+        const fastTime   = addMinutesToTime(startTime, fastMins);
+        const midTime    = addMinutesToTime(startTime, baseMins);
+        const slowTime   = addMinutesToTime(startTime, slowMins);
+        return `
+          <div class="runner-timing-row">
+            <div class="runner-name">
+              <span class="runner-dot" style="background:${r.color}"></span>
+              ${escHtml(r.name)}
+            </div>
+            <div class="time-range">
+              <span class="time-badge">${fastTime}</span>
+              <span class="time-separator">&rarr;</span>
+              <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">${midTime}</span>
+              <span class="time-separator">&rarr;</span>
+              <span class="time-badge late">${slowTime}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="location-result-card">
+          <div class="location-header">
+            <span class="location-km">${loc.dist} ${unit}</span>
+            <span class="location-mi">${altLabel}</span>
+            <span class="tag">${(fraction * 100).toFixed(0)}% of race</span>
+          </div>
+          ${runnerRows}
+          <div class="legend">
+            <span><span class="legend-dot" style="background:var(--accent);"></span>Green = 5% faster than target</span>
+            <span><span class="legend-dot" style="background:var(--accent2);"></span>Orange = 15% slower than target</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const resultsSection = document.getElementById('resultsSection');
+    document.getElementById('resultsContainer').innerHTML = html;
+    resultsSection.style.display = 'block';
+    setTimeout(() => resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }
+
+  // ── Utility ────────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Event listeners ────────────────────────────────────────────────────────
+  document.getElementById('raceDistance').addEventListener('change', function () {
+    document.getElementById('customDistanceField').style.display = this.value === 'custom' ? 'block' : 'none';
+    renderRunners();
+    saveState();
+  });
+  document.getElementById('distanceUnit').addEventListener('change', function () {
+    renderLocations();
+    renderRunners();
+    saveState();
+  });
+  document.getElementById('raceStart').addEventListener('change', saveState);
+  document.getElementById('customDistance').addEventListener('input', function () {
+    renderRunners();
+    saveState();
+  });
+
+  // ── Boot: load saved state or defaults ─────────────────────────────────────
+  (function loadState() {
+    const savedDist   = getCookie('raceDistance');
+    const savedCustom = getCookie('customDistance');
+    const savedUnit   = getCookie('distanceUnit');
+    const savedStart  = getCookie('raceStart');
+    const savedRunners = getCookie('runners');
+    const savedLocs    = getCookie('locations');
+
+    if (savedDist)  { document.getElementById('raceDistance').value = savedDist; }
+    if (savedDist === 'custom') {
+      document.getElementById('customDistanceField').style.display = 'block';
+      if (savedCustom) document.getElementById('customDistance').value = savedCustom;
+    }
+    if (savedUnit)  document.getElementById('distanceUnit').value = savedUnit;
+    if (savedStart) document.getElementById('raceStart').value    = savedStart;
+
+    if (savedRunners && savedRunners.length) {
+      savedRunners.forEach(r => { runners.push(r); runnerCount++; });
+      renderRunners();
+    } else {
+      addRunner({ name: 'Runner 1', finishHours: 4, finishMins: 0, color: RUNNER_COLORS[0] });
+    }
+
+    if (savedLocs && savedLocs.length) {
+      savedLocs.forEach(l => { locations.push(l); locationCount++; });
+      renderLocations();
+    } else {
+      addLocation({ dist: '' });
+    }
+  })();
+</script>
+</body>
+</html>
