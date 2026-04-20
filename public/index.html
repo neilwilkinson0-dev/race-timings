@@ -222,6 +222,16 @@
     if (r) { r[field] = val; saveState(); renderRunners(); }
   }
 
+  function updateRunnerTime(id, val) {
+    const parts = val.split(':');
+    if (parts.length !== 2) return;
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (isNaN(h) || isNaN(m) || m < 0 || m > 59 || h < 0) return;
+    const r = runners.find(r => r.id === id);
+    if (r) { r.finishHours = h; r.finishMins = m; saveState(); renderRunners(); }
+  }
+
   function getPaceStr(r) {
     const dist = getRaceDistanceKm();
     if (!dist) return '—';
@@ -247,17 +257,11 @@
             placeholder="Runner name">
           <button class="btn btn-danger" onclick="removeRunner('${r.id}')">remove</button>
         </div>
-        <div class="inline-grid">
-          <div class="field">
-            <label>Expected finish &mdash; hours</label>
-            <input type="number" min="0" max="24" step="1" value="${r.finishHours}"
-              oninput="updateRunner('${r.id}','finishHours',+this.value)">
-          </div>
-          <div class="field">
-            <label>Expected finish &mdash; minutes</label>
-            <input type="number" min="0" max="59" step="1" value="${r.finishMins}"
-              oninput="updateRunner('${r.id}','finishMins',+this.value)">
-          </div>
+        <div class="field">
+          <label>Expected finish (HH:MM)</label>
+          <input type="text" pattern="[0-9]+:[0-5][0-9]" placeholder="04:00"
+            value="${String(r.finishHours).padStart(2,'0')}:${String(r.finishMins).padStart(2,'0')}"
+            onchange="updateRunnerTime('${r.id}',this.value)">
         </div>
         <div class="pace-hint">Target: ${r.finishHours}h ${r.finishMins}m &nbsp;&middot;&nbsp; ~${getPaceStr(r)}</div>
       </div>
