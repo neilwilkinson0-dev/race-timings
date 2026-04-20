@@ -261,7 +261,7 @@
           <label>Expected finish (HH:MM)</label>
           <input type="text" pattern="[0-9]+:[0-5][0-9]" placeholder="04:00"
             value="${String(r.finishHours).padStart(2,'0')}:${String(r.finishMins).padStart(2,'0')}"
-            onchange="updateRunnerTime('${r.id}',this.value)">
+            oninput="updateRunnerTime('${r.id}',this.value)">
         </div>
         <div class="pace-hint">Target: ${r.finishHours}h ${r.finishMins}m &nbsp;&middot;&nbsp; ~${getPaceStr(r)}</div>
       </div>
@@ -312,9 +312,9 @@
   // ── Time arithmetic ────────────────────────────────────────────────────────
   function addMinutesToTime(startTime, minutes) {
     const [h, m] = startTime.split(':').map(Number);
-    const total  = h * 60 + m + minutes;
+    const total  = Math.round(h * 60 + m + minutes);
     const nh     = Math.floor(total / 60) % 24;
-    const nm     = Math.round(total % 60);
+    const nm     = total % 60;
     return nh.toString().padStart(2, '0') + ':' + nm.toString().padStart(2, '0');
   }
 
