@@ -189,9 +189,8 @@
   function getRaceDistanceKm() {
     const unit = document.getElementById('distanceUnit').value;
     const sel  = document.getElementById('raceDistance').value;
-    let dist = sel === 'custom'
-      ? (parseFloat(document.getElementById('customDistance').value) || 0)
-      : parseFloat(sel);
+    if (sel !== 'custom') return parseFloat(sel); // predefined values are always km
+    const dist = parseFloat(document.getElementById('customDistance').value) || 0;
     return unit === 'mi' ? miToKm(dist) : dist;
   }
 
